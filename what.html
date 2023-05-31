@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ca</title>
+    <style>
+        *{
+            margin: 0;
+            box-sizing: border-box;
+
+        }
+        #frame{
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-height: 400px;
+            overflow: hidden;
+        }
+        #frame > * {
+            position: absolute;
+            display: block;
+            height: 100%; /* 要素の高さを100%に設定 */
+        }
+    </style>
+</head>
+<body>
+<div id="frame">
+<canvas id="canvas"></canvas>
+</div>
+<script>
+const frame = document.getElementById("frame");
+const can = document.getElementById("canvas");
+const ctx = can.getContext("2d");
+
+frame.style.backgroundColor = "gray";
+can.width = 700;
+
+const canvasHeightScale = 4/(can.width/100)
+can.height = can.width* canvasHeightScale;
+can.style.left = `${(frame.clientWidth-can.width)/2}px`
+
+
+
+
+
+
+
+class White {
+    static height = 100;
+    constructor(keyboard,rect,pitch,audio){
+        this.keyboard = keyboard;
+        this.rect = rect;
+        this.pitch = pitch
+
+        this.audio = audio;
+    }
+    checkTouch(){
+        if(this.keyboard.touch.press&&this.keyboard.touch.x > this.rect.left &&
+        this.keyboard.touch.x < this.rect.left + this.rect.width &&
+        this.keyboard.touch.y > this.rect.top &&
+        this.keyboard.touch.y < this.rect.top + this.rect.height){
+            this.audio.play();
+        }else{
+            this.audio.pause();
+        }
+
+    }
+    draw(ctx){
+        ctx.fillStyle = "white"
+        ctx.fillRect(this.rect.left,this.rect.top,this.rect.width,this.rect.height,);
+        ctx.strokeRect(this.rect.left,this.rect.top,this.rect.width,this.rect.height);
+
+        ctx.fillText(this.pitch,this.rect.left,this.rect.top)
+    }
+}
+class Black {
+    static height = 50;
+    constructor(keyboard,rect,pitch,audio){
+        this.keyboard = keyboard;
+        this.rect = rect;
+        this.pitch = pitch
+
+        this.audio = audio;
+    }
+    checkTouch(){
+        if(this.keyboard.touch.press&&this.keyboard.touch.x > this.rect.left &&
+        this.keyboard.touch.x < this.rect.left + this.rect.width &&
+        this.keyboard.touch.y > this.rect.top &&
+        this.keyboard.touch.y < this.rect.top + this.rect.height){
+            this.audio.play();
+ 
+            this.keyboard.touch.blackPress = true;
+        }else{
+            this.audio.pause();
+        }
+    }
+    draw(ctx){
+        ctx.fillStyle = "black"
+        ctx.fillRect(this.rect.left,this.rect.top,this.rect.width,this.rect.height,);
+        ctx.strokeRect(this.rect.left,this.rect.top,this.rect.width,this.rect.height);
+
+        ctx.fillText(this.pitch,this.rect.left,this.rect.top)
+    }
+}
+
+class Keyboard {
+    constructor(can){
+        this.can = can;
+        this.whiteNumber = 14
+        this.blackNumber = 13
+        this.white = [];
+        this.black = [];
+
+        this.whitePitches = ["C3","D3","E3","F3","G3","A3","B3","C4","D4","E4","F4","G4","A4","B4"];
+        this.blackPitches = ["Csharp3","Dsharp3","Fsharp3","Gsharp3","Asharp3","Csharp4","Dsharp4","Fsharp4","Gsharp4","Asharp4"];
+        
+        this.touch = {
+            x:null,
+            y:null,
+            press:false,
+            blackPress:false,
+        }
+
+        this.can.addEventListener("touchstart",e=>{
+            this.touch.x = e.touches[0].clientX - this.can.offsetLeft;
+            this.touch.y = e.touches[0].clientY;
+            this.touch.press = true;
+        })
+        this.can.addEventListener("touchmove",e=>{
+            e.preventDefault()
+            this.touch.x = e.touches[e.touches.length-1].clientX - this.can.offsetLeft;
+            this.touch.y = e.touches[e.touches.length-1].clientY;
+            this.touch.blackPress = false;
+        })
+        this.can.addEventListener("touchend",e=>{
+            this.touch.press = false;
+            this.touch.blackPress = false;
+        })
+
+
+        this.init();
+    }
+    init(){
+        let keyWidth = this.can.width/this.whiteNumber;
+        let keyTop = this.can.height - White.height
+        for(let i=0; i<this.whiteNumber; i++){
+            let keyRect = {};
+            keyRect.width = keyWidth;
+            keyRect.height = White.height;
+            keyRect.top = keyTop;
+            keyRect.left = i*keyWidth;
+            this.white.push(new White(this,keyRect,this.whitePitches[i],new Audio(`se/${this.whitePitches[i]}.mp3`)))
+        }
+        let j = -1;
+        for(let i=0; i<this.blackNumber; i++){
+            if(i % 7!==2 && i % 7!==6)j++;
+            else continue;
+            let keyRect = {};
+            keyRect.width = (keyWidth)/2;
+            keyRect.height = Black.height;
+            keyRect.top = keyTop;
+            keyRect.left = (i+0.75)* keyWidth;
+            this.black.push(new Black(this,keyRect,this.blackPitches[j],new Audio(`se/${this.blackPitches[j]}.mp3`)))
+        }
+
+    }
+    draw(ctx){
+        this.white.forEach(white => {
+            white.draw(ctx);
+        })
+        this.black.forEach(black => {
+            black.draw(ctx);
+        })
+    }
+    checkTouch(){
+        this.black.forEach(black => {
+            black.checkTouch();
+        })
+        if(!this.touch.blackPress){
+            this.white.forEach(white => {
+                white.checkTouch();
+            })
+        }
+    }
+}
+
+let keyboard = new Keyboard(can)
+
+
+
+function animate(){
+    ctx.fillStyle = "orange"
+    ctx.fillRect(0,0,can.width,can.height)
+    keyboard.draw(ctx)
+    keyboard.checkTouch()
+    requestAnimationFrame(animate)
+}
+
+animate();
+
+</script>
+</body>
+</html>
