@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://chat.openai.com/favicon.ico">
     <title>ca</title>
     <style>
         *{
@@ -23,16 +24,27 @@
             display: block;
             height: 100%; /* 要素の高さを100%に設定 */
         }
+        div.mask{
+        position: absolute;
+        top:0px;
+        left:0px;
+        width:100vw;
+        height: 100vh;
+        background-color: gray;
+        opacity: 0.33;
+        }
     </style>
 </head>
 <body>
 <div id="frame">
 <canvas id="canvas"></canvas>
+<div class="mask"></div>
 </div>
 <script>
 const frame = document.getElementById("frame");
 const can = document.getElementById("canvas");
 const ctx = can.getContext("2d");
+const mask = document.querySelector(".mask")
 
 frame.style.backgroundColor = "gray";
 can.width = 700;
@@ -43,7 +55,9 @@ can.style.left = `${(frame.clientWidth-can.width)/2}px`
 
 
 
-
+mask.addEventListener("click",e=>{
+    mask.style.display = "none";
+})
 
 
 
@@ -64,6 +78,7 @@ class White {
             this.audio.play();
         }else{
             this.audio.pause();
+            this.audio.currentTime = 0;
         }
 
     }
@@ -94,6 +109,7 @@ class Black {
             this.keyboard.touch.blackPress = true;
         }else{
             this.audio.pause();
+            this.audio.currentTime = 0;
         }
     }
     draw(ctx){
