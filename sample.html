@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+        }
+        div#mask{
+            position: absolute;
+            top:0px;
+            left:0px;
+            width:100vw;
+            height: 100vh;
+            background-color: gray;
+            opacity: 0.33;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="mask"></div>
+<script>
+const can = document.getElementById("canvas");
+const ctx = can.getContext("2d");
+const mask = document.getElementById("mask");
+
+mask.addEventListener("click",e=>{
+    mask.style.display = "none";
+});
+
+
+
+
+
+function animate(){
+    can.width = window.innerWidth;
+    can.height = window.innerHeight;
+    can.style.background = "orange"
+    requestAnimationFrame(animate)
+}
+
+animate();
+</script>
+</body>
+</html>
