@@ -37,8 +37,17 @@ const div = document.getElementById("div")
 div.style.width = window.innerWidth+"px";
 div.style.height = window.innerHeight+"px";
 div.style.background = "orange"
-let audio = new Audio("se/C3.mp3");
+
 div.addEventListener("touchstart",e=>{
+    let audio
+    if(e.touches[0].clientX > 400){
+        audio = new Audio("se/C3.mp3");
+    }else if(e.touches[0].clientX > 200){
+        audio = new Audio("se/D3.mp3");
+    }else {
+        audio = new Audio("se/E3.mp3");
+    }
+    console.log(e.touches[0].clientX)
     audio.play();
 })
 
