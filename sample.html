@@ -22,6 +22,7 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<div id="div"></div>
 <div id="mask"></div>
 <script>
 const can = document.getElementById("canvas");
@@ -32,11 +33,36 @@ mask.addEventListener("click",e=>{
     mask.style.display = "none";
 });
 
+const div = document.getElementById("div")
+div.style.width = window.innerWidth+"px";
+div.style.height = window.innerHeight+"px";
+div.style.background = "orange"
+let audio = new Audio("se/C3.mp3");
+div.addEventListener("touchstart",e=>{
+    audio.play();
+})
 
+class Keyboard {
+    constructor(can){
+        this.can = can;
 
+        this.keys = [];
+        
+        
+        this.init();
+    }
+    init(){
+        let audio = new Audio("se/C3.mp3");
+        this.can.addEventListener("touchstart",e=>{
+            audio.play();
+        })
+    }
+}
+let keyboard = new Keyboard(can)
 
 
 function animate(){
+    can.style.display = "none"
     can.width = window.innerWidth;
     can.height = window.innerHeight;
     can.style.background = "orange"
