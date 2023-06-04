@@ -4,13 +4,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="icon" href="https://chat.openai.com/favicon.ico">
+    <title>ca</title>
     <style>
         *{
             margin: 0;
+            box-sizing: border-box;
+
         }
-        div#mask{
-            position: absolute;
+        #frame{
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-height: 400px;
+            overflow: hidden;
+        }
+        div.mask{
+            
             top:0px;
             left:0px;
             width:100vw;
@@ -21,64 +31,18 @@
     </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-<div id="div"></div>
-<div id="mask"></div>
+<div class="mask"></div>
+<div class="mask"></div>
 <script>
-const can = document.getElementById("canvas");
-const ctx = can.getContext("2d");
-const mask = document.getElementById("mask");
+let displayHeigh = document.querySelector(".mask").clientHeight;
 
-mask.addEventListener("click",e=>{
-    mask.style.display = "none";
+window.addEventListener('scroll', e=>{
+    e.preventDefault();
+    console.log(window.pageYOffset)
+    if(window.pageYOffset>displayHeigh-20){
+        window.scrollTo(0,displayHeigh);
+    }
 });
-
-const div = document.getElementById("div")
-div.style.width = window.innerWidth+"px";
-div.style.height = window.innerHeight+"px";
-div.style.background = "orange"
-
-div.addEventListener("touchstart",e=>{
-    let audio
-    if(e.touches[0].clientX > 400){
-        audio = new Audio("se/C3.mp3");
-    }else if(e.touches[0].clientX > 200){
-        audio = new Audio("se/D3.mp3");
-    }else {
-        audio = new Audio("se/E3.mp3");
-    }
-    console.log(e.touches[0].clientX)
-    audio.play();
-})
-
-class Keyboard {
-    constructor(can){
-        this.can = can;
-
-        this.keys = [];
-        
-        
-        this.init();
-    }
-    init(){
-        let audio = new Audio("se/C3.mp3");
-        this.can.addEventListener("touchstart",e=>{
-            audio.play();
-        })
-    }
-}
-let keyboard = new Keyboard(can)
-
-
-function animate(){
-    can.style.display = "none"
-    can.width = window.innerWidth;
-    can.height = window.innerHeight;
-    can.style.background = "orange"
-    requestAnimationFrame(animate)
-}
-
-animate();
 </script>
 </body>
 </html>
