@@ -1,48 +1,135 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="https://chat.openai.com/favicon.ico">
-    <title>ca</title>
-    <style>
-        *{
-            margin: 0;
-            box-sizing: border-box;
-
-        }
-        #frame{
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            max-height: 400px;
-            overflow: hidden;
-        }
-        div.mask{
-            
-            top:0px;
-            left:0px;
-            width:100vw;
-            height: 100vh;
-            background-color: gray;
-            opacity: 0.33;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="https://chat.openai.com/favicon.ico">
+<title>ca</title>
+<style>
+    *{
+        margin: 0;
+        box-sizing: border-box;
+        list-style-type: none;
+    }
+    div.mask{
+        top:0px;
+        left:0px;
+        width:100vw;
+        height: 100vh;
+        background-color: gray;
+        opacity: 0.33;
+    }
+    div#wrap{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    canvas#note{
+        position: absolute;
+        
+    }
+</style>
 </head>
 <body>
 <div class="mask"></div>
-<div class="mask"></div>
+<div id="wrap">
+    <ul id="keys"></ul>
+    <canvas id="note"></canvas>
+</div>
+<script src="keyImage.js"></script>
 <script>
-let displayHeigh = document.querySelector(".mask").clientHeight;
+
+const displayHeight = document.querySelector(".mask").clientHeight;
+
+
+
 
 window.addEventListener('scroll', e=>{
     e.preventDefault();
-    console.log(window.pageYOffset)
-    if(window.pageYOffset>displayHeigh-20){
-        window.scrollTo(0,displayHeigh);
+    if(window.pageYOffset>displayHeight-20){
+        window.scrollTo(0,displayHeight);
     }
 });
+
+class Keyboard {
+    constructor(){
+
+        this.ulElement = document.getElementById("keys");
+        this.wrap = document.getElementById("wrap");
+        this.style = {
+            width: 730+"px",
+            height: 400+"px",
+            position: "relative",
+            background : "rgba(0,255,100,0.5)"
+        }
+
+        this.whiteNumber = 14
+        this.blackNumber = 13
+        this.whiteKeys = [];
+        this.blackKeys = [];
+        
+        this.whitePitches = ["C3","D3","E3","F3","G3","A3","B3","C4","D4","E4","F4","G4","A4","B4"];
+        this.blackPitches = ["Csharp3","Dsharp3","Fsharp3","Gsharp3","Asharp3","Csharp4","Dsharp4","Fsharp4","Gsharp4","Asharp4"];
+
+        this.click = {
+            x:null,
+            y:null,
+            press:false,
+        }
+
+        this.audios = []
+        this.init();
+    }
+    init(){
+        Object.keys(this.style).forEach((style) => {
+            this.ulElement.style[style] = this.style[style];
+        });
+        this.wrap.style.height = displayHeight+"px"
+
+        const canvas = document.createElement("canvas")
+        for(let i=0; i<this.whiteNumber; i++){
+            const whiteLi = Key.createKeyLi(canvas,"white",Key.W*i,this.ulElement.clientHeight-Key.H,this.whitePitches[i]);
+            this.whiteKeys.push(whiteLi)
+            this.ulElement.appendChild(whiteLi)
+        }
+        let j = -1;
+        for(let i=0; i<this.blackNumber; i++){
+            if(i % 7!==2 && i % 7!==6)j++;
+            else continue;
+            const blackLi = Key.createKeyLi(canvas,"#555",Key.W*i+38,this.ulElement.clientHeight-Key.H,this.blackPitches[j]);
+            this.blackKeys.push(blackLi)
+            this.ulElement.appendChild(blackLi)
+        }
+
+        this.wrap.addEventListener("mousedown",e=>{
+            if(e.target.parentNode.tagName === "LI"){
+                console.log(e.target.parentNode)
+                this.audios.push(new Audio(`se/${e.target.parentNode.id}.mp3`))
+            }
+        })
+        
+    }
+    check(){
+        this.audios.forEach(e=>{
+            e.play();
+        })
+    }
+}
+let keyboard;
+window.onload = () => {
+    keyboard = new Keyboard();
+    animate();
+}
+
+
+function animate(){
+    keyboard.check()
+
+    requestAnimationFrame(animate)
+}
+
+
 </script>
 </body>
 </html>
