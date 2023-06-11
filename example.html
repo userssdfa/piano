@@ -1,54 +1,220 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Document</title>
-<link rel="icon" href="https://chat.openai.com/favicon.ico">
-<style>
-    body{
-        overflow: hidden;
-    }
-    canvas {
-        background-color: #ff0000; /* 背景色を赤に設定 */
-        color: #ffffff; /* 文字色を白に設定 */
-        width: 200px; /* 幅を200ピクセルに設定 */
-        height: 50px; /* 高さを50ピクセルに設定 */
-        border: none;
-    }
-    div.mask{
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        div#background{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            background-color: bisque;
+
+        }
+        ul#keyboard {
+            position: relative;
+            background: lightgreen;
+            width: 800px;
+            height: 390px;
+        }
+        li#key{
+            position: absolute;
+            pointer-events: none;
+            user-select: none;
+        }
+        div#mask{
         position: absolute;
-        top:0px;
-        left:0px;
         width:100vw;
         height: 100vh;
         background-color: gray;
         opacity: 0.33;
-    }
-</style>
+        }
+    </style>
 </head>
 <body>
-<canvas id="sound"></canvas>
-<div class="mask"></div>
+<div id="background"></div>
+<div id="background">
+    <ul id="keyboard"></ul>
+    <div id="mask"></div>
+</div>
+<script src="createLi.js"></script>
 <script>
-const sound = document.getElementById("sound");
-const mask = document.querySelector(".mask")
-let audio;
-window.onload = () => {
-    audio = new Audio("se/C3.mp3");
-    console.log(audio)
-}
-window.addEventListener("touchmove",e=>{
-    e.preventDefault();
-},{passive:false})
-mask.addEventListener("click",e=>{
-    mask.style.display = "none";
-})
-sound.addEventListener("touchstart",e=>{
 
-    audio.play();
+const ul = document.getElementById("keyboard")
+const mask = document.getElementById("mask");
+mask.addEventListener("click",e=>{
+    mask.style.display = "none"
 })
+
+
+class Note {
+    constructor(keyboard,can,time,pitch){
+        this.keyboard = keyboard;
+        this.can = can;
+
+    }
+    draw(){
+
+    }
+}
+
+
+class Keyboard {
+    constructor(ul){
+        this.ul = ul;
+
+        this.whiteNumber = 14;
+        this.blackNumber = 13;
+        
+        this.currentWhiteKeys = {};
+
+        this.whitePitches = ["C3","D3","E3","F3","G3","A3","B3","C4","D4","E4","F4","G4","A4","B4"];
+        this.blackPitches = ["Csharp3","Dsharp3","Fsharp3","Gsharp3","Asharp3","Csharp4","Dsharp4","Fsharp4","Gsharp4","Asharp4"];
+
+
+        this.keyWidth = 50;
+        this.keyHeight = 100;
+        this.leftPadding = (this.ul.clientWidth - this.keyWidth*this.whiteNumber)/2;
+        this.topPadding = (this.ul.clientHeight - this.keyHeight);
+
+        this.click = []
+
+        this.init();
+        this.entryEvents();
+    }
+    init(){
+
+        for(let i=0; i<this.whiteNumber; i++){
+            let li = createLi("white");
+            li.style.top = this.topPadding+"px";
+            li.style.left = i*this.keyWidth+this.leftPadding+"px";
+
+            this.ul.appendChild(li)
+        }
+        let j = -1;
+        for(let i=0; i<this.blackNumber; i++){
+            if(i % 7!==2 && i % 7!==6)j++;
+            else continue;
+            let li = createLi("#555");
+            li.style.top = this.topPadding+"px";
+            li.style.left = i*this.keyWidth+this.leftPadding+this.keyWidth*0.7+"px";
+
+            this.ul.appendChild(li)
+        }
+
+        for(let pitch of this.whitePitches){
+            this.currentWhiteKeys[pitch] = {
+                audio: new Audio(`se/${pitch}.mp3`),
+                press: false,
+            }
+        }
+    }
+    play(){
+
+        let playList = []
+        Object.keys(this.currentWhiteKeys).forEach(key => {
+            this.click.forEach(click => {
+                let x = Math.floor((click.x-this.leftPadding)/this.keyWidth);
+                let target = this.whitePitches[x];
+                playList.push(target)
+            });
+            if(playList.includes(key)){
+                if(!this.currentWhiteKeys[key].press){
+                    this.currentWhiteKeys[key].press = true;
+                    this.currentWhiteKeys[key].audio.play();
+                }
+            }else{
+                this.currentWhiteKeys[key].press = false;
+                this.currentWhiteKeys[key].audio.pause();
+                this.currentWhiteKeys[key].audio.currentTime = 0;  
+            }
+
+        })
+
+    }
+    entryEvents(){
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if(isMobile){//スマホであるか
+            this.ul.parentNode.addEventListener("touchstart",e=>{
+            const touches = e.touches;
+            for(let i=0; i<touches.length; i++){
+                const touch = touches[i];
+                this.click.push({
+                    identifier: touch.identifier,
+                    x: touch.pageX,
+                    y: touch.pageY,
+                    press: true
+                })
+            }
+            })
+            this.ul.parentNode.addEventListener("touchmove",e=>{
+                const touches = e.touches;
+                for(let i=0; i<touches.length; i++){
+                    const touch = touches[i];
+
+                    for(let j=0; j<this.click.length; j++){
+                        if(this.click[j].identifier === touch.identifier){
+                            this.click[j].x = touch.pageX;
+                            this.click[j].y = touch.pageY;
+                            break;
+                        }
+                    }
+                }
+            })
+            this.ul.parentNode.addEventListener("touchend",e=>{
+
+                const touches = e.changedTouches;
+                for(let i=0; i<touches.length; i++){
+                    const touch = touches[i];
+
+                    for(let j=0; j<this.click.length; j++){
+                        if(this.click[j].identifier === touch.identifier){
+                            this.click.splice(j,1);
+                            break;
+                        }
+                    }
+                }
+            })
+        }else{
+            this.ul.addEventListener("mousedown",e=>{
+                this.click[0] = {
+                    x:e.offsetX,
+                    y:e.offsetY,
+                    press:true,
+                }
+            })
+            this.ul.addEventListener("mouseup",e=>{
+                this.click[0] = {}
+            })
+        }
+        window.addEventListener("contextmenu",e=>{
+            e.preventDefault();
+        })
+
+    }
+}
+
+let keyboard = new Keyboard(ul)
+
+function animate(){
+    if(this.mask.style.display === "none"){
+        keyboard.play();
+    }
+    requestAnimationFrame(animate)
+}
+
+animate();
+
 </script>
 </body>
 </html>
