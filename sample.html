@@ -21,13 +21,17 @@
         opacity: 0.33;
     }
     div#wrap{
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        position: relative;
     }
     canvas#note{
         position: absolute;
         
+    }
+    button#scroll{
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: aqua;
     }
 </style>
 </head>
@@ -36,6 +40,7 @@
 <div id="wrap">
     <ul id="keys"></ul>
     <canvas id="note"></canvas>
+    <button id="scroll"></button>
 </div>
 <script src="keyImage.js"></script>
 <script>
@@ -57,11 +62,25 @@ class Keyboard {
 
         this.ulElement = document.getElementById("keys");
         this.wrap = document.getElementById("wrap");
+        this.button = document.getElementById("scroll")
+
+        const parentWidth = this.wrap.clientWidth;
+        const parentHeight = displayHeight;
+        const ulWidth = 730;
+        const ulHeight = 390;
+
         this.style = {
-            width: 730+"px",
-            height: 400+"px",
-            position: "relative",
+            width: ulWidth+"px",
+            height: ulHeight+"px",
+            position: "absolute",
+            top:(parentHeight-ulHeight)/2+"px",
+            left:(parentWidth-ulWidth)/2+"px",
             background : "rgba(0,255,100,0.5)"
+        }
+
+        this.buttonStyle = {
+            top:(parentHeight-ulHeight)/2+10+"px",
+            left:(parentWidth-ulWidth)/2+10+"px",
         }
 
         this.whiteNumber = 14
@@ -72,20 +91,23 @@ class Keyboard {
         this.whitePitches = ["C3","D3","E3","F3","G3","A3","B3","C4","D4","E4","F4","G4","A4","B4"];
         this.blackPitches = ["Csharp3","Dsharp3","Fsharp3","Gsharp3","Asharp3","Csharp4","Dsharp4","Fsharp4","Gsharp4","Asharp4"];
 
-        this.click = {
-            x:null,
-            y:null,
-            press:false,
-        }
+        this.clickKey = {C3:new Audio("se/C3.mp3"),D3:new Audio("se/D3.mp3"),E3:new Audio("se/E3.mp3"),F3:new Audio("se/F3.mp3"),G3:new Audio("se/G3.mp3"),A3:new Audio("se/A3.mp3"),B3:new Audio("se/B3.mp3"),C4:new Audio("se/C4.mp3"),D4:new Audio("se/D4.mp3"),E4:new Audio("se/E4.mp3"),F4:new Audio("se/F4.mp3"),G4:new Audio("se/G4.mp3"),A4:new Audio("se/A4.mp3"),B4:new Audio("se/B4.mp3"),Csharp3:new Audio("se/Csharp3.mp3"),Dsharp3:new Audio("se/Dsharp3.mp3"),Fsharp3:new Audio("se/Fsharp3.mp3"),Gsharp3:new Audio("se/Gsharp3.mp3"),Asharp3:new Audio("se/Asharp3.mp3"),Csharp4:new Audio("se/Csharp4.mp3"),Dsharp4:new Audio("se/Dsharp4.mp3"),Fsharp4:new Audio("se/Fsharp4.mp3"),Gsharp4:new Audio("se/Gsharp4.mp3"),Asharp4:new Audio("se/Asharp4.mp3")}
 
         this.audios = []
+        this.buttonClick = false;
         this.init();
     }
     init(){
         Object.keys(this.style).forEach((style) => {
             this.ulElement.style[style] = this.style[style];
         });
+        Object.keys(this.buttonStyle).forEach((style) => {
+            this.button.style[style] = this.buttonStyle[style];
+        });
+
         this.wrap.style.height = displayHeight+"px"
+    
+
 
         const canvas = document.createElement("canvas")
         for(let i=0; i<this.whiteNumber; i++){
@@ -102,15 +124,81 @@ class Keyboard {
             this.ulElement.appendChild(blackLi)
         }
 
-        this.wrap.addEventListener("mousedown",e=>{
-            if(e.target.parentNode.tagName === "LI"){
-                console.log(e.target.parentNode)
-                this.audios.push(new Audio(`se/${e.target.parentNode.id}.mp3`))
+        let activeTouches = []; // アクティブなタッチポイントの配列
+
+        this.button.addEventListener("click",e=>{
+            this.buttonClick = !this.buttonClick;
+            document.body.style.overflow = this.buttonClick ? "hidden" : "auto";
+            this.button.style.backgroundColor = this.buttonClick ? "white" : "aqua"
+        })
+        this.button.addEventListener("touchstart",e=>{
+            this.buttonClick = !this.buttonClick;
+            document.body.style.overflow = this.buttonClick ? "hidden" : "auto";
+            this.button.style.backgroundColor = this.buttonClick ? "white" : "aqua"
+        })
+
+        this.ulElement.addEventListener("touchstart", e => {
+            e.preventDefault();
+
+            const touches = e.changedTouches; // 変化したタッチポイントの配列
+
+            for (let i = 0; i < touches.length; i++) {
+                const touch = touches[i];
+                const touchID = touch.identifier;
+
+                activeTouches.push(touchID);
+            }
+            console.log(e.changedTouches[0].identifier)
+        },{passive:false});
+        //window.addEventListener("touchmove",e=>{
+        //    e.preventDefault();
+//
+        //},{passive:this.buttonClick})
+
+        //window.addEventListener("touchend", e => {
+        //    e.preventDefault();
+//
+        //    const touches = e.changedTouches;
+//
+        //    for (let i = 0; i < touches.length; i++) {
+        //        const touch = touches[i];
+        //        const touchID = touch.identifier;
+//
+        //        const touchIndex = activeTouches.indexOf(touchID);
+        //        if (touchIndex !== -1) {
+        //            activeTouches.splice(touchIndex, 1); // 離れた指を配列から削除
+        //        }
+        //    }
+        //});
+        window.addEventListener("mousedown",e=>{
+            e.preventDefault();
+            //console.log(e.clientX,e.clientY)
+            let a = e.target.parentNode;
+            if(a.tagName === "LI"){
+                this.clickKey[a.id].play()
+            }
+        })
+        window.addEventListener("mousemove",e=>{
+            let a = e.target.parentNode.id;
+            if(this.clickKey[a]&&a.tagName === "LI"){
+                this.clickKey[a].pause();
+                this.clickKey[a].currentTime = 0;
+            }
+        })
+        window.addEventListener("mouseup",e=>{
+            let a = e.target.parentNode.id;
+            if(this.clickKey[a]&&a.tagName === "LI"){
+                this.clickKey[a].pause();
+                this.clickKey[a].currentTime = 0;
             }
         })
         
     }
     check(){
+        //if(e.target.parentNode.tagName === "LI"){
+        //        this.audios.push(new Audio(`se/${e.target.parentNode.id}.mp3`))
+        //    }
+        //ループしてるかも
         this.audios.forEach(e=>{
             e.play();
         })
