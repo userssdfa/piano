@@ -19,7 +19,6 @@
             width: 100vw;
             height: 100vh;
             background-color: bisque;
-
         }
         ul#keyboard {
             position: relative;
@@ -33,45 +32,75 @@
             user-select: none;
         }
         div#mask{
-        position: absolute;
-        width:100vw;
-        height: 100vh;
-        background-color: gray;
-        opacity: 0.33;
+            position: absolute;
+            width:100vw;
+            height: 100vh;
+            background-color: gray;
+            opacity: 0.33;
+            
+        }
+        canvas#canvas{
+            position: absolute;
+            opacity: 1;
         }
     </style>
 </head>
 <body>
 <div id="background"></div>
 <div id="background">
-    <ul id="keyboard"></ul>
+    <ul id="keyboard">
+        <canvas id="canvas"></canvas>
+    </ul>
+    
     <div id="mask"></div>
 </div>
 <script src="createLi.js"></script>
 <script>
 
 const ul = document.getElementById("keyboard")
+const can = document.getElementById("canvas");
 const mask = document.getElementById("mask");
+
+can.width = ul.clientWidth;
+can.height = ul.clientHeight-100;
+
 mask.addEventListener("click",e=>{
     mask.style.display = "none"
 })
 
 
 class Note {
-    constructor(keyboard,can,time,pitch){
+    constructor(keyboard,pitch,height,time){
         this.keyboard = keyboard;
-        this.can = can;
+        this.whitePitches = keyboard.whitePitches;
+        this.leftPadding = keyboard.leftPadding;
+        this.topPadding = keyboard.topPadding;
+        this.pitch = pitch;
+        this.time = time
+        this.left = null;
+        this.top = null;
+        this.width = keyboard.keyWidth;
+        this.height = height;
 
+        this.init();
     }
-    draw(){
-
+    init(){
+        this.left = this.whitePitches.indexOf(this.pitch)*this.width+this.leftPadding;
+        this.top = -this.time;
+    }
+    draw(ctx){
+        this.top = this.keyboard.currentTime-this.time
+        ctx.fillStyle = "orange";
+        ctx.fillRect(this.left,this.top,this.width,this.height)
     }
 }
 
 
 class Keyboard {
-    constructor(ul){
+    constructor(ul,can){
         this.ul = ul;
+        this.can = can;
+        this.notes = [];
 
         this.whiteNumber = 14;
         this.blackNumber = 13;
@@ -87,7 +116,9 @@ class Keyboard {
         this.leftPadding = (this.ul.clientWidth - this.keyWidth*this.whiteNumber)/2;
         this.topPadding = (this.ul.clientHeight - this.keyHeight);
 
-        this.click = []
+        this.click = [];
+
+        this.currentTime = 0;
 
         this.init();
         this.entryEvents();
@@ -118,6 +149,8 @@ class Keyboard {
                 press: false,
             }
         }
+        //keyboard,pitch,length,time
+        this.notes.push(new Note(this,"C3",200,100))
     }
     play(){
 
@@ -142,10 +175,20 @@ class Keyboard {
         })
 
     }
+    draw(){
+        let ctx = this.can.getContext("2d");
+        ctx.clearRect(0,0,this.can.width,this.can.height)
+        
+        this.notes.forEach(note => {
+            note.draw(ctx)
+        })
+    }
     entryEvents(){
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if(isMobile){//スマホであるか
+            this.ul.style.background = "pink"
             this.ul.parentNode.addEventListener("touchstart",e=>{
+                this.ul.style.background = "lightgreen"
             const touches = e.touches;
             for(let i=0; i<touches.length; i++){
                 const touch = touches[i];
@@ -185,6 +228,9 @@ class Keyboard {
                     }
                 }
             })
+            this.ul.addEventListener("touchstart",e=>{
+                this.ul.style.background = "red"
+            })
         }else{
             this.ul.addEventListener("mousedown",e=>{
                 this.click[0] = {
@@ -200,20 +246,33 @@ class Keyboard {
         window.addEventListener("contextmenu",e=>{
             e.preventDefault();
         })
-
+        window.addEventListener("keydown",e=>{
+            if(e.key === " "){
+                this.currentTime++;
+            }
+        })
     }
+    
 }
 
-let keyboard = new Keyboard(ul)
+let keyboard = new Keyboard(ul,can)
+let lastTime = 0;
 
-function animate(){
+function animate(timeStamp){
+    
+    const deltaTime = timeStamp - lastTime;
+    lastTime = timeStamp;
+    
+    
     if(this.mask.style.display === "none"){
+        keyboard.currentTime += deltaTime/2
         keyboard.play();
     }
+    keyboard.draw();
     requestAnimationFrame(animate)
 }
 
-animate();
+animate(0);
 
 </script>
 </body>
